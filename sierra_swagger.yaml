@@ -1,0 +1,505 @@
+openapi: 3.0.3
+info:
+  title: SIERRA Investments - ESG Data Service
+  description: |-
+    Description for SIERRA's REST API services.
+  version: 3.2.1
+# externalDocs:
+#   description: SIERRA's Confluence Pages for further Documentation
+#   url: https://unsw-seng-2025.atlassian.net/wiki/spaces/H17BSIERRA/pages/27132374/API+Endpoints
+
+tags:
+  - name: v1
+    description: Operations for processing and filtering ESG data
+  - name: v2
+    description: Operations for further breadth and interoperability. 
+  
+components:
+  schemas:
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: error message
+    ticker:
+      type: string
+      example: dis
+    company_name:
+      type: string
+      example: The Walt Disney Company
+    name_query:
+      type: string
+      example: disney
+    timestamp:
+      type: string
+      example: 2024-02-04
+    last_processed_date:
+      type: string
+      example: 2025-02-03
+    level:
+      type: string
+      example: A
+    score_type:
+      type: string
+      example: total_score
+    total_score:
+      type: number
+      example: 90
+    envrionmental_score:
+      type: number
+      example: 80
+    social_score:
+      type: number
+      example: 85
+    governance_score:
+      type: number
+      example: 83
+    allESGReturnObject:
+      type: object
+      properties:
+        message:
+          type: string
+          example: All ESG data retrieved successfully
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ESGObject'
+    apiESGReturnObject:
+      type: object
+      properties:
+        ticker:
+          $ref: '#/components/schemas/ticker'
+        company_name:
+          $ref: '#/components/schemas/company_name'
+        historical_ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ESGObject'
+    tickerNameReturnObject:
+      type: object
+      properties:
+        cNameQuery:
+          $ref: '#/components/schemas/name_query'
+        company:
+          $ref: '#/components/schemas/ESGObject'
+    predictObject:
+      type: object
+      properties:
+        prediction:
+          type: number
+          example: 27.44281768798828
+    ESGObject:
+      type: object
+      properties:
+        ticker:
+          $ref: '#/components/schemas/ticker'
+        company_name:
+          $ref: '#/components/schemas/company_name'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        last_processed_date:
+          $ref: '#/components/schemas/last_processed_date'
+        rating:
+          $ref: '#/components/schemas/level'
+        total_score:
+          $ref: '#/components/schemas/total_score'
+        envrinomental_score:
+          $ref: '#/components/schemas/envrionmental_score'
+        social_score:
+          $ref: '#/components/schemas/social_score'
+        governance_score:
+          $ref: '#/components/schemas/governance_score'
+    totalLevelReturnObject:
+      type: object
+      properties:
+        rating:
+          $ref: '#/components/schemas/level'
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ESGObject'
+    scoreObject:
+      type: object
+      properties:
+        ticker:
+          $ref: '#/components/schemas/ticker'
+        company_name:
+          $ref: '#/components/schemas/company_name'
+        score:
+          $ref: '#/components/schemas/total_score'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+    scoreReturnObject:
+      type: object
+      properties:
+        score_type:
+          $ref: '#/components/schemas/score_type'
+        validCompanies:
+          type: array
+          items:
+            $ref: '#/components/schemas/scoreObject'
+          
+paths:
+  /api/esg/{ticker}:
+    get:
+      tags:
+        - v1
+      summary: Gets ESG data for a company
+      description: Allows a user to retrieve the ESG data for a specific company
+      parameters:
+        - name: ticker
+          in: path
+          description: The specified ticker to retrieve ESG data from.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/apiESGReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - ticker does not refer to a valid company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/esg/all:
+    get:
+      tags:
+        - v1
+      summary: Retrieves all ESG data
+      description: Allows a user to retrieve the ESG data from the database.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/allESGReturnObject'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/search/company/{name}:
+    get:
+      tags:
+        - v1
+      summary: Retrieves a ticker for a corresponding company name.
+      description: Allows a user search for a company name and ticker through a string input.
+      parameters:
+        - name: name
+          in: path
+          description: The name used to find the corresponding ticker.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tickerNameReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - name does not refer to a valid company or ticker
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/search/level/total_level/{rating}:
+    get:
+      tags:
+        - v1
+      summary: Retrieves companies that correspond to the given rating level.
+      description: Allows a user search for a company name and ticker through a string input.
+      parameters:
+        - name: rating
+          in: path
+          description: The level (A, B, C, D, E) being searched for.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/totalLevelReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - No companies are found in the rating level
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+            - The level type is invalid.
+            - The level value is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/search/score/greater/{scoreType}/{score}:
+    get:
+      tags:
+        - v1
+      summary: Retrieves all companies with a score higher than the value given, based on the score type.
+      description: Allows a user search for a company name and ticker through a string input.
+      parameters:
+        - name: scoreType
+          in: path
+          description: The type of score (total, environmental, scoial, governance) being filtered for.
+          required: true
+          schema:
+            type: string
+        - name: score
+          in: path
+          description: The score value to compare to.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scoreReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - No companies are found within the score search range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+            - The score type is invalid
+            - The score is a negative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/search/score/lesser/{scoreType}/{score}:
+    get:
+      tags:
+        - v1
+      summary: Retrieves all companies with a score lesser than the value given, based on the score type.
+      description: Allows a user search for a company name and ticker through a string input.
+      parameters:
+        - name: scoreType
+          in: path
+          description: The type of score (total, environmental, scoial, governance) being filtered for.
+          required: true
+          schema:
+            type: string
+        - name: score
+          in: path
+          description: The score value to compare to.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scoreReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - No companies are found within the score search range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+            - The score type is invalid
+            - The score is a negative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/search/score/{scoreType}/{score1}/{score2}:
+    get:
+      tags:
+        - v1
+      summary: Retrieves all companies within a given lower and upper bound, based on the score type.
+      description: Allows a user search for a company name and ticker through a string input.
+      parameters:
+        - name: scoreType
+          in: path
+          description: The type of score (total, environmental, scoial, governance) being filtered for.
+          required: true
+          schema:
+            type: string
+        - name: score1
+          in: path
+          description: The lower bound score.
+          required: true
+          schema:
+            type: integer
+        - name: score2
+          in: path
+          description: The upper bound score.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scoreReturnObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - No companies are found within the score search range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+            - The score type is invalid
+            - The score is a negative value
+            - score1 is greater than score2
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  
+  /api/v2/esg/recent/{ticker}:
+    get:
+      tags:
+        - v2
+      summary: Retrieves the most recent ESG data based on a given ticker.
+      description: Allows a user to retrieve the most recent ESG data for a specific company.
+      parameters:
+        - name: ticker
+          in: path
+          description: The specified ticker to retrieve ESG data from.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ESGObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - ticker does not refer to a valid company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - There is a DynamoDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+                
+  /api/predict/:
+    get:
+      tags:
+        - v2
+      summary: Predicts the next month's total ESG score. 
+      description: Passes in a company's total esg scores from 3 months ago predict the following month's score, based on a model that's been trained from 5 years worth of data.
+      parameters:
+        - name: lag1
+          in: query
+          description: Total ESG score from 1 month ago.
+          required: true
+          schema:
+            type: integer
+        - name: lag2
+          in: query
+          description: Total ESG score from 2 months ago.
+          required: true
+          schema:
+            type: integer
+        - name: lag3
+          in: query
+          description: Total ESG score from 3 months ago.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/predictObject'
+        '404':
+          description: |-
+            If any of the following is true:
+            - One or mor of the required parameters is missing/invalid. 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: |-
+            If any of the following is true:
+            - An error occurs when trying to get a prediction from Sagemaker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
