@@ -11,7 +11,9 @@ info:
 tags:
   - name: v1
     description: Operations for processing and filtering ESG data
-  - name: v2
+  - name: api/v2
+    description: Operations for further breadth and interoperability. 
+  - name: auth
     description: Operations for further breadth and interoperability. 
   
 components:
@@ -22,6 +24,21 @@ components:
         error:
           type: string
           example: error message
+    username:
+      type: string
+      example: RealUsername
+    password:
+      type: string
+      example: password123
+    email:
+      type: string
+      example: asd@gmail.com
+    token:
+      type: string
+      example: token123
+    userId:
+      type: string
+      example: 9a9ff16a-3873-45b1-8f69-8e659b9e5e04
     ticker:
       type: string
       example: dis
@@ -139,7 +156,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/scoreObject'
-          
+    registerObject:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/email'
+        username:
+          $ref: '#/components/schemas/username'
+        password: 
+          $ref: '#/components/schemas/password'
+    userRegisterObject:
+      type: object
+      properties:
+        token: 
+          $ref: '#/components/schemas/token'
+        user:
+          type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/email'
+            password: 
+              $ref: '#/components/schemas/password'
+            userId:
+              $ref: '#/components/schemas/userId'
+    saveTickerObject:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Ticker saved successfully
+        ticker:
+          $ref: '#/components/schemas/ticker'
+        timestamp: 
+          $ref: '#/components/schemas/timestamp'
+              
 paths:
   /api/esg/{ticker}:
     get:
@@ -421,7 +471,7 @@ paths:
   /api/v2/esg/recent/{ticker}:
     get:
       tags:
-        - v2
+        - api/v2
       summary: Retrieves the most recent ESG data based on a given ticker.
       description: Allows a user to retrieve the most recent ESG data for a specific company.
       parameters:
@@ -458,7 +508,7 @@ paths:
   /api/predict/:
     get:
       tags:
-        - v2
+        - api/v2
       summary: Predicts the next month's total ESG score. 
       description: Passes in a company's total esg scores from 3 months ago predict the following month's score, based on a model that's been trained from 5 years worth of data.
       parameters:
@@ -490,7 +540,7 @@ paths:
         '404':
           description: |-
             If any of the following is true:
-            - One or mor of the required parameters is missing/invalid. 
+            - One or more of the required parameters is missing/invalid. 
           content:
             application/json:
               schema:
@@ -503,3 +553,117 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+                
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Allows users to register an account. 
+      description: Takes in the user's username, email, password, and returns a unique token for the user's session.
+      requestBody:
+        description: Requires the user's email, name, and password.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/registerObject'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRegisterObject'
+        '401':
+          description: |-
+            If any of the following is true:
+            - One or more of the credentials is missing/invalid. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid credentials
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Allows users to register an account. 
+      description: Takes in the user's email and password, and returns a unique token for the user's session.
+      requestBody:
+        description: Requires the user's email and password.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  $ref: '#/components/schemas/email'
+                username:
+                  $ref: '#/components/schemas/username'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRegisterObject'
+        '401':
+          description: |-
+            If any of the following is true:
+            - Authorisation token is not given. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Authorisation token required
+ 
+  /auth/tickers:
+    post:
+      tags:
+        - auth
+      summary: Saves the ticker for a particular user. 
+      description: Saves a ticker that the user has frequented.
+      parameters:
+        - name: token
+          in: query
+          description: Unique token of the specific user.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Requires the ticker to be saved.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticker:
+                  $ref: '#/components/schemas/ticker'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/saveTickerObject'
+        '401':
+          description: |-
+            If any of the following is true:
+            - Authorisation token is not given. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Authorisation token required
