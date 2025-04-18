@@ -18,12 +18,12 @@ tags:
   
 components:
   schemas:
-    error:
+    error500:
       type: object
       properties:
         error:
           type: string
-          example: error message
+          example: Error fetching ESG data
     username:
       type: string
       example: RealUsername
@@ -50,10 +50,10 @@ components:
       example: disney
     timestamp:
       type: string
-      example: 2024-02-04
+      example: 2024-11-01
     last_processed_date:
       type: string
-      example: 2025-02-03
+      example: 2025-03-27
     level:
       type: string
       example: A
@@ -62,16 +62,16 @@ components:
       example: total_score
     total_score:
       type: number
-      example: 90
+      example: 15
     envrionmental_score:
       type: number
-      example: 80
+      example: 0
     social_score:
       type: number
-      example: 85
+      example: 9
     governance_score:
       type: number
-      example: 83
+      example: 5
     allESGReturnObject:
       type: object
       properties:
@@ -218,7 +218,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'No ESG data found for ticker: dis'
         '500':
           description: |-
             If any of the following is true:
@@ -226,7 +230,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/esg/all:
     get:
@@ -248,7 +252,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/search/company/{name}:
     get:
@@ -277,7 +281,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Company not found
         '500':
           description: |-
             If any of the following is true:
@@ -285,7 +293,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/search/level/total_level/{rating}:
     get:
@@ -307,6 +315,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/totalLevelReturnObject'
+        '400':
+          description: |-
+            If any of the following is true:
+            - Valid rating is not given
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid total level. Choose from: A to E.'
         '404':
           description: |-
             If any of the following is true:
@@ -314,7 +334,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No companies found for rating = A
         '500':
           description: |-
             If any of the following is true:
@@ -324,7 +348,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/search/score/greater/{scoreType}/{score}:
     get:
@@ -359,7 +383,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No companies found with total_score greater than 80.
         '500':
           description: |-
             If any of the following is true:
@@ -369,7 +397,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/search/score/lesser/{scoreType}/{score}:
     get:
@@ -404,7 +432,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No companies found with total_score less than 10.
         '500':
           description: |-
             If any of the following is true:
@@ -414,7 +446,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/search/score/{scoreType}/{score1}/{score2}:
     get:
@@ -455,7 +487,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No companies found with total_score between 80 and 90.
         '500':
           description: |-
             If any of the following is true:
@@ -466,7 +502,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
   
   /api/v2/esg/recent/{ticker}:
     get:
@@ -495,7 +531,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'No ESG data found for ticker: dis.'
         '500':
           description: |-
             If any of the following is true:
@@ -503,7 +543,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /api/predict/:
     get:
@@ -537,14 +577,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/predictObject'
-        '404':
+        '400':
           description: |-
             If any of the following is true:
             - One or more of the required parameters is missing/invalid. 
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: One or more of the required parameters is missing or invalid.
         '500':
           description: |-
             If any of the following is true:
@@ -552,7 +596,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/error500'
                 
   /auth/register:
     post:
@@ -574,6 +618,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/userRegisterObject'
+        '400':
+          description: |-
+            If any of the following is true:
+            - One or more of the required parameters is missing/invalid. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email, password, and name are required.
         '401':
           description: |-
             If any of the following is true:
@@ -586,6 +642,30 @@ paths:
                   error:
                     type: string
                     example: Invalid credentials
+        '409':
+          description: |-
+            If any of the following is true:
+            - The user already exists. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Registration error: User already exists'
+        '500':
+          description: |-
+            If any of the following is true:
+            - An error occurs when trying to register the user with valid credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Registration error: Error registering user'
 
   /auth/login:
     post:
@@ -612,6 +692,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/userRegisterObject'
+        '400':
+          description: |-
+            If any of the following is true:
+            - One or more of the required parameters is missing/invalid. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email and password are required.
         '401':
           description: |-
             If any of the following is true:
@@ -623,8 +715,20 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: Authorisation token required
- 
+                    example: 'Login error: Invalid credentials'
+        '500':
+          description: |-
+            If any of the following is true:
+            - An error occurs when trying to register the user with valid credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Login error: Error logging in'
+                    
   /auth/tickers:
     post:
       tags:
