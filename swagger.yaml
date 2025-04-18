@@ -14,7 +14,7 @@ tags:
   - name: api/v2
     description: Operations for further breadth and interoperability. 
   - name: auth
-    description: Operations for further breadth and interoperability. 
+    description: Operations for user authentication. 
   
 components:
   schemas:
